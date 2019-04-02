@@ -328,6 +328,18 @@ CG_INLINE BOOL isIPhone4() {
     self.selfReference = nil;
 }
 
+#pragma mark - Methods for external buttons
+
+- (void)doneButtonPressed {
+    [self notifyTarget:self.target didSucceedWithAction:self.successAction origin:[self storedOrigin]];
+    [self dismissPicker];
+}
+
+- (void)cancelButtonPressed {
+    [self notifyTarget:self.target didCancelWithAction:self.cancelAction origin:[self storedOrigin]];
+    [self dismissPicker];
+}
+
 #pragma mark - Custom Buttons
 
 - (NSMutableArray *)customButtons {
@@ -579,6 +591,42 @@ CG_INLINE BOOL isIPhone4() {
 - (void)setPickerBackgroundColor:(UIColor *)backgroundColor {
     _pickerBackgroundColor = backgroundColor;
     _actionSheet.bgView.backgroundColor = backgroundColor;
+}
+
+
+#pragma mark - Methods for external buttons
+
+- (void)upButtonPressed {
+    NSAssert([self.pickerView respondsToSelector:@
+              selector(selectRow:inComponent:animated:)], @"Can't interact with pickerView");
+    
+    UIPickerView *picker = (UIPickerView *) self.pickerView;
+    NSAssert(picker != NULL, @"PickerView is invalid");
+    NSInteger buttonValue = [picker selectedRowInComponent:0] - 1;
+    if (buttonValue >= 0) {
+        [picker selectRow:buttonValue inComponent:0 animated:YES];
+        if ([self respondsToSelector:@selector(pickerView:didSelectRow:inComponent:)]) {
+            void (*objc_msgSendTyped)(id target, SEL _cmd, id pickerView, NSInteger row, NSInteger component) = (void *) objc_msgSend; // sending Integers as params
+            objc_msgSendTyped(self, @selector(pickerView:didSelectRow:inComponent:), picker, buttonValue, 0);
+        }
+    }
+    
+}
+
+- (void)downButtonPressed {
+    NSAssert([self.pickerView respondsToSelector:@
+              selector(selectRow:inComponent:animated:)], @"Can't interact with pickerView");
+    UIPickerView *picker = (UIPickerView *) self.pickerView;
+    NSAssert(picker != NULL, @"PickerView is invalid");
+    NSInteger buttonValue = [picker selectedRowInComponent:0] + 1;
+    if (buttonValue < [picker numberOfRowsInComponent:0]) {
+        [picker selectRow:buttonValue inComponent:0 animated:YES];
+        if ([self respondsToSelector:@selector(pickerView:didSelectRow:inComponent:)]) {
+            void (*objc_msgSendTyped)(id target, SEL _cmd, id pickerView, NSInteger row, NSInteger component) = (void *) objc_msgSend; // sending Integers as params
+            objc_msgSendTyped(self, @selector(pickerView:didSelectRow:inComponent:), picker, buttonValue, 0);
+        }
+    }
+    
 }
 
 #pragma mark - Picker blur effect
